@@ -1,0 +1,55 @@
+Practical Machine Learning - Project
+====================================
+
+Make results reproducible:
+
+```{r}
+set.seed(397)
+```
+
+Load the data from the internet. We treat empty strings as 'NA' values.
+
+```{r}
+rawTraining <- read.csv(url("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"), na.strings = c("","NA"))
+rawTesting <- read.csv(url("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"), na.strings = c("","NA"))
+```
+
+Determine which columns have no NA values:
+
+```{r}
+validCols <- names(rawTraining)[colSums(is.na(rawTraining))==0]
+validCols
+```
+
+Remove the index (because the 'classe' values are in order), the timestamps, and window data. This is our clean data.
+
+```{r}
+validCols <- validCols[8:60]
+clean <- rawTraining[,validCols]
+```
+
+Separate into training, cross-validation, and test data.
+
+```{r}
+library(caret)
+inTrain <- createDataPartition(clean$classe, p = 0.75, list = FALSE)
+training <- clean[inTrain,]
+crossVal <- clean[-inTrain,]
+testing <- rawTesting[,validCols]
+```
+
+Train using the Random Forest technique. This will automatically resample (i.e. bagging) and 'boost' using multiple trees.
+
+```{r}
+modelFit <- train(classe ~ ., method = "rf", data = training)
+modelFit
+modelFit$finalModel
+```
+
+TODO: check with crossVal data, verify final result
+
+```{r}
+pred = predict(modelFit, crossVal[-53])
+confusionMatrix(pred, testing$classe)
+```
+
