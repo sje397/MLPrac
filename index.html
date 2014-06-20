@@ -151,9 +151,19 @@ hr {
 <body>
 <h1>Practical Machine Learning - Project</h1>
 
-<p>Make results reproducible:</p>
+<p>Make results reproducible. Also enable parallelism to make training faster.</p>
 
 <pre><code class="r">set.seed(397)
+
+library(doMC)
+</code></pre>
+
+<pre><code>## Loading required package: foreach
+## Loading required package: iterators
+## Loading required package: parallel
+</code></pre>
+
+<pre><code class="r">registerDoMC(cores = 4)
 </code></pre>
 
 <p>Load the data from the internet. We treat empty strings as &#39;NA&#39; values.</p>
@@ -162,7 +172,7 @@ hr {
 rawTesting &lt;- read.csv(url(&quot;http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv&quot;), na.strings = c(&quot;&quot;,&quot;NA&quot;))
 </code></pre>
 
-<p>We&#39;ll just use columns that have no NA values:</p>
+<p>We&#39;ll just use columns that have no NA values.</p>
 
 <pre><code class="r">validCols &lt;- names(rawTraining)[colSums(is.na(rawTraining))==0]
 validCols
@@ -209,7 +219,7 @@ clean &lt;- rawTraining[,validCols]
 <pre><code class="r">inTrain &lt;- createDataPartition(clean$classe, p = 0.75, list = FALSE)
 training &lt;- clean[inTrain,]
 crossVal &lt;- clean[-inTrain,]
-testing &lt;- rawTesting[,validCols[-54]]
+testing &lt;- rawTesting[,validCols[-53]]
 </code></pre>
 
 <p>Train using the Random Forest technique. This will automatically resample (i.e. bagging) and &#39;boost&#39; using multiple trees. Decision trees are a good model for this problem, as there are likely to be &#39;thresholds&#39; for many of the accelerometer and gyroscope readings that indicate the quality of the excercise - i.e. moving to quickly or too far will be detectable as a value that exceeds a threshold. A decision tree is able to encode a nested set of such thresholds using the necessary readings.</p>
@@ -240,8 +250,8 @@ testing &lt;- rawTesting[,validCols[-54]]
 ## 
 ##   mtry  Accuracy  Kappa  Accuracy SD  Kappa SD
 ##   2     1         1      0.002        0.002   
-##   30    1         1      0.002        0.003   
-##   50    1         1      0.005        0.006   
+##   30    1         1      0.002        0.002   
+##   50    1         1      0.004        0.005   
 ## 
 ## Accuracy was used to select the optimal model using  the largest value.
 ## The final value used for the model was mtry = 2.
@@ -257,21 +267,21 @@ testing &lt;- rawTesting[,validCols[-54]]
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 2
 ## 
-##         OOB estimate of  error rate: 0.68%
+##         OOB estimate of  error rate: 0.6%
 ## Confusion matrix:
 ##      A    B    C    D    E class.error
-## A 4180    5    0    0    0    0.001195
-## B   16 2824    8    0    0    0.008427
-## C    0   24 2541    2    0    0.010129
-## D    0    0   35 2373    4    0.016169
-## E    0    0    2    4 2700    0.002217
+## A 4183    2    0    0    0   0.0004779
+## B   14 2826    8    0    0   0.0077247
+## C    0   17 2548    2    0   0.0074016
+## D    0    0   38 2373    1   0.0161692
+## E    0    0    0    6 2700   0.0022173
 </code></pre>
 
 <h2>Out of Sample Error Estimate</h2>
 
-<p>By checking against the cross-validation data, we can estimate out of sample error:</p>
+<p>By checking against the cross-validation data, we can estimate out of sample error.</p>
 
-<pre><code class="r">pred = predict(modelFit, crossVal[-54])
+<pre><code class="r">pred = predict(modelFit, crossVal[,-53])
 confusionMatrix(pred, crossVal$classe)
 </code></pre>
 
@@ -279,39 +289,39 @@ confusionMatrix(pred, crossVal$classe)
 ## 
 ##           Reference
 ## Prediction    A    B    C    D    E
-##          A 1394    6    0    0    0
-##          B    1  942    3    0    0
-##          C    0    1  851   20    0
-##          D    0    0    1  784    1
-##          E    0    0    0    0  900
+##          A 1395    7    0    0    0
+##          B    0  940    2    0    0
+##          C    0    2  852   21    0
+##          D    0    0    1  782    0
+##          E    0    0    0    1  901
 ## 
 ## Overall Statistics
-##                                         
-##                Accuracy : 0.993         
-##                  95% CI : (0.991, 0.995)
-##     No Information Rate : 0.284         
-##     P-Value [Acc &gt; NIR] : &lt;2e-16        
-##                                         
-##                   Kappa : 0.991         
-##  Mcnemar&#39;s Test P-Value : NA            
+##                                        
+##                Accuracy : 0.993        
+##                  95% CI : (0.99, 0.995)
+##     No Information Rate : 0.284        
+##     P-Value [Acc &gt; NIR] : &lt;2e-16       
+##                                        
+##                   Kappa : 0.991        
+##  Mcnemar&#39;s Test P-Value : NA           
 ## 
 ## Statistics by Class:
 ## 
 ##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity             0.999    0.993    0.995    0.975    0.999
-## Specificity             0.998    0.999    0.995    1.000    1.000
-## Pos Pred Value          0.996    0.996    0.976    0.997    1.000
+## Sensitivity             1.000    0.991    0.996    0.973    1.000
+## Specificity             0.998    0.999    0.994    1.000    1.000
+## Pos Pred Value          0.995    0.998    0.974    0.999    0.999
 ## Neg Pred Value          1.000    0.998    0.999    0.995    1.000
 ## Prevalence              0.284    0.194    0.174    0.164    0.184
-## Detection Rate          0.284    0.192    0.174    0.160    0.184
-## Detection Prevalence    0.285    0.193    0.178    0.160    0.184
-## Balanced Accuracy       0.999    0.996    0.995    0.987    0.999
+## Detection Rate          0.284    0.192    0.174    0.159    0.184
+## Detection Prevalence    0.286    0.192    0.178    0.160    0.184
+## Balanced Accuracy       0.999    0.995    0.995    0.986    1.000
 </code></pre>
 
-<p>We can expect, with 95% confidence, to get an accuracy on the test data between 99.2% and 99.6%.</p>
+<p>We can expect, with 95% confidence, to get an accuracy on the test data between 99.0% and 99.5%.</p>
 
-<p>Thanks for reading!</p>
-<p>Scott</p>
+<p>Thanks for reading!<br/>
+Scott</p>
 
 </body>
 

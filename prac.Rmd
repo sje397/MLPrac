@@ -1,10 +1,13 @@
 Practical Machine Learning - Project
 ====================================
 
-Make results reproducible:
+Make results reproducible. Also enable parallelism to make training faster.
 
 ```{r}
 set.seed(397)
+
+library(doMC)
+registerDoMC(cores = 4)
 ```
 
 Load the data from the internet. We treat empty strings as 'NA' values.
@@ -14,7 +17,7 @@ rawTraining <- read.csv(url("http://d396qusza40orc.cloudfront.net/predmachlearn/
 rawTesting <- read.csv(url("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"), na.strings = c("","NA"))
 ```
 
-We'll just use columns that have no NA values:
+We'll just use columns that have no NA values.
 
 ```{r}
 validCols <- names(rawTraining)[colSums(is.na(rawTraining))==0]
@@ -48,15 +51,15 @@ modelFit$finalModel
 
 Out of Sample Error Estimate
 ----------------------------
-By checking against the cross-validation data, we can estimate out of sample error:
+By checking against the cross-validation data, we can estimate out of sample error.
 
 ```{r}
 pred = predict(modelFit, crossVal[,-53])
 confusionMatrix(pred, crossVal$classe)
 ```
 
-We can expect, with 95% confidence, to get an accuracy on the test data between 99.1% and 99.5%.
+We can expect, with 95% confidence, to get an accuracy on the test data between 99.0% and 99.5%.
 
-Thanks for reading!
+Thanks for reading!  
 Scott
 
