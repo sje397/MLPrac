@@ -14,14 +14,14 @@ rawTraining <- read.csv(url("http://d396qusza40orc.cloudfront.net/predmachlearn/
 rawTesting <- read.csv(url("http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"), na.strings = c("","NA"))
 ```
 
-Determine which columns have no NA values:
+We'll just use columns that have no NA values:
 
 ```{r}
 validCols <- names(rawTraining)[colSums(is.na(rawTraining))==0]
 validCols
 ```
 
-Remove the index (because the 'classe' values are in order), the timestamps, and window data. This is our clean data.
+Remove the index, the timestamps and window data since these are not useful as predictors. This is our clean data.
 
 ```{r}
 validCols <- validCols[8:60]
@@ -35,10 +35,10 @@ library(caret)
 inTrain <- createDataPartition(clean$classe, p = 0.75, list = FALSE)
 training <- clean[inTrain,]
 crossVal <- clean[-inTrain,]
-testing <- rawTesting[,validCols]
+testing <- rawTesting[,validCols[-53]]
 ```
 
-Train using the Random Forest technique. This will automatically resample (i.e. bagging) and 'boost' using multiple trees.
+Train using the Random Forest technique. This will automatically resample (i.e. bagging) and 'boost' using multiple trees. Decision trees are a good model for this problem, as there are likely to be 'thresholds' for many of the accelerometer and gyroscope readings that indicate the quality of the excercise - i.e. moving to quickly or too far will be detectable as a value that exceeds a threshold. A decision tree is able to encode a nested set of such thresholds using the necessary readings.
 
 ```{r}
 modelFit <- train(classe ~ ., method = "rf", data = training)
@@ -46,10 +46,17 @@ modelFit
 modelFit$finalModel
 ```
 
-TODO: check with crossVal data, verify final result
+Out of Sample Error Estimate
+----------------------------
+By checking against the cross-validation data, we can estimate out of sample error:
 
 ```{r}
-pred = predict(modelFit, crossVal[-53])
-confusionMatrix(pred, testing$classe)
+pred = predict(modelFit, crossVal[,-53])
+confusionMatrix(pred, crossVal$classe)
 ```
+
+We can expect, with 95% confidence, to get an accuracy on the test data between 99.1% and 99.5%.
+
+Thanks for reading!
+Scott
 

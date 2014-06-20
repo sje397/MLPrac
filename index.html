@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Practical Machine Learning - Project</title>
+
+
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h1>Practical Machine Learning - Project</h1>
+
+<p>Make results reproducible:</p>
+
+<pre><code class="r">set.seed(397)
+</code></pre>
+
+<p>Load the data from the internet. We treat empty strings as &#39;NA&#39; values.</p>
+
+<pre><code class="r">rawTraining &lt;- read.csv(url(&quot;http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv&quot;), na.strings = c(&quot;&quot;,&quot;NA&quot;))
+rawTesting &lt;- read.csv(url(&quot;http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv&quot;), na.strings = c(&quot;&quot;,&quot;NA&quot;))
+</code></pre>
+
+<p>We&#39;ll just use columns that have no NA values:</p>
+
+<pre><code class="r">validCols &lt;- names(rawTraining)[colSums(is.na(rawTraining))==0]
+validCols
+</code></pre>
+
+<pre><code>##  [1] &quot;X&quot;                    &quot;user_name&quot;            &quot;raw_timestamp_part_1&quot;
+##  [4] &quot;raw_timestamp_part_2&quot; &quot;cvtd_timestamp&quot;       &quot;new_window&quot;          
+##  [7] &quot;num_window&quot;           &quot;roll_belt&quot;            &quot;pitch_belt&quot;          
+## [10] &quot;yaw_belt&quot;             &quot;total_accel_belt&quot;     &quot;gyros_belt_x&quot;        
+## [13] &quot;gyros_belt_y&quot;         &quot;gyros_belt_z&quot;         &quot;accel_belt_x&quot;        
+## [16] &quot;accel_belt_y&quot;         &quot;accel_belt_z&quot;         &quot;magnet_belt_x&quot;       
+## [19] &quot;magnet_belt_y&quot;        &quot;magnet_belt_z&quot;        &quot;roll_arm&quot;            
+## [22] &quot;pitch_arm&quot;            &quot;yaw_arm&quot;              &quot;total_accel_arm&quot;     
+## [25] &quot;gyros_arm_x&quot;          &quot;gyros_arm_y&quot;          &quot;gyros_arm_z&quot;         
+## [28] &quot;accel_arm_x&quot;          &quot;accel_arm_y&quot;          &quot;accel_arm_z&quot;         
+## [31] &quot;magnet_arm_x&quot;         &quot;magnet_arm_y&quot;         &quot;magnet_arm_z&quot;        
+## [34] &quot;roll_dumbbell&quot;        &quot;pitch_dumbbell&quot;       &quot;yaw_dumbbell&quot;        
+## [37] &quot;total_accel_dumbbell&quot; &quot;gyros_dumbbell_x&quot;     &quot;gyros_dumbbell_y&quot;    
+## [40] &quot;gyros_dumbbell_z&quot;     &quot;accel_dumbbell_x&quot;     &quot;accel_dumbbell_y&quot;    
+## [43] &quot;accel_dumbbell_z&quot;     &quot;magnet_dumbbell_x&quot;    &quot;magnet_dumbbell_y&quot;   
+## [46] &quot;magnet_dumbbell_z&quot;    &quot;roll_forearm&quot;         &quot;pitch_forearm&quot;       
+## [49] &quot;yaw_forearm&quot;          &quot;total_accel_forearm&quot;  &quot;gyros_forearm_x&quot;     
+## [52] &quot;gyros_forearm_y&quot;      &quot;gyros_forearm_z&quot;      &quot;accel_forearm_x&quot;     
+## [55] &quot;accel_forearm_y&quot;      &quot;accel_forearm_z&quot;      &quot;magnet_forearm_x&quot;    
+## [58] &quot;magnet_forearm_y&quot;     &quot;magnet_forearm_z&quot;     &quot;classe&quot;
+</code></pre>
+
+<p>Remove the index, the timestamps and window data since these are not useful as predictors. This is our clean data.</p>
+
+<pre><code class="r">validCols &lt;- validCols[8:60]
+clean &lt;- rawTraining[,validCols]
+</code></pre>
+
+<p>Separate into training, cross-validation, and test data.</p>
+
+<pre><code class="r">library(caret)
+</code></pre>
+
+<pre><code>## Loading required package: lattice
+## Loading required package: ggplot2
+## Loading required package: methods
+</code></pre>
+
+<pre><code class="r">inTrain &lt;- createDataPartition(clean$classe, p = 0.75, list = FALSE)
+training &lt;- clean[inTrain,]
+crossVal &lt;- clean[-inTrain,]
+testing &lt;- rawTesting[,validCols[-54]]
+</code></pre>
+
+<p>Train using the Random Forest technique. This will automatically resample (i.e. bagging) and &#39;boost&#39; using multiple trees. Decision trees are a good model for this problem, as there are likely to be &#39;thresholds&#39; for many of the accelerometer and gyroscope readings that indicate the quality of the excercise - i.e. moving to quickly or too far will be detectable as a value that exceeds a threshold. A decision tree is able to encode a nested set of such thresholds using the necessary readings.</p>
+
+<pre><code class="r">modelFit &lt;- train(classe ~ ., method = &quot;rf&quot;, data = training)
+</code></pre>
+
+<pre><code>## Loading required package: randomForest
+## randomForest 4.6-7
+## Type rfNews() to see new features/changes/bug fixes.
+</code></pre>
+
+<pre><code class="r">modelFit
+</code></pre>
+
+<pre><code>## Random Forest 
+## 
+## 14718 samples
+##    52 predictors
+##     5 classes: &#39;A&#39;, &#39;B&#39;, &#39;C&#39;, &#39;D&#39;, &#39;E&#39; 
+## 
+## No pre-processing
+## Resampling: Bootstrapped (25 reps) 
+## 
+## Summary of sample sizes: 14718, 14718, 14718, 14718, 14718, 14718, ... 
+## 
+## Resampling results across tuning parameters:
+## 
+##   mtry  Accuracy  Kappa  Accuracy SD  Kappa SD
+##   2     1         1      0.002        0.002   
+##   30    1         1      0.002        0.003   
+##   50    1         1      0.005        0.006   
+## 
+## Accuracy was used to select the optimal model using  the largest value.
+## The final value used for the model was mtry = 2.
+</code></pre>
+
+<pre><code class="r">modelFit$finalModel
+</code></pre>
+
+<pre><code>## 
+## Call:
+##  randomForest(x = x, y = y, mtry = param$mtry) 
+##                Type of random forest: classification
+##                      Number of trees: 500
+## No. of variables tried at each split: 2
+## 
+##         OOB estimate of  error rate: 0.68%
+## Confusion matrix:
+##      A    B    C    D    E class.error
+## A 4180    5    0    0    0    0.001195
+## B   16 2824    8    0    0    0.008427
+## C    0   24 2541    2    0    0.010129
+## D    0    0   35 2373    4    0.016169
+## E    0    0    2    4 2700    0.002217
+</code></pre>
+
+<h2>Out of Sample Error Estimate</h2>
+
+<p>By checking against the cross-validation data, we can estimate out of sample error:</p>
+
+<pre><code class="r">pred = predict(modelFit, crossVal[-54])
+confusionMatrix(pred, crossVal$classe)
+</code></pre>
+
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1394    6    0    0    0
+##          B    1  942    3    0    0
+##          C    0    1  851   20    0
+##          D    0    0    1  784    1
+##          E    0    0    0    0  900
+## 
+## Overall Statistics
+##                                         
+##                Accuracy : 0.993         
+##                  95% CI : (0.991, 0.995)
+##     No Information Rate : 0.284         
+##     P-Value [Acc &gt; NIR] : &lt;2e-16        
+##                                         
+##                   Kappa : 0.991         
+##  Mcnemar&#39;s Test P-Value : NA            
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity             0.999    0.993    0.995    0.975    0.999
+## Specificity             0.998    0.999    0.995    1.000    1.000
+## Pos Pred Value          0.996    0.996    0.976    0.997    1.000
+## Neg Pred Value          1.000    0.998    0.999    0.995    1.000
+## Prevalence              0.284    0.194    0.174    0.164    0.184
+## Detection Rate          0.284    0.192    0.174    0.160    0.184
+## Detection Prevalence    0.285    0.193    0.178    0.160    0.184
+## Balanced Accuracy       0.999    0.996    0.995    0.987    0.999
+</code></pre>
+
+<p>We can expect, with 95% confidence, to get an accuracy on the test data between 99.2% and 99.6%.</p>
+
+<p>Thanks for reading!</p>
+<p>Scott</p>
+
+</body>
+
+</html>
