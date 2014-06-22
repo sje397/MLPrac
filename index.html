@@ -222,7 +222,7 @@ crossVal &lt;- clean[-inTrain,]
 testing &lt;- rawTesting[,validCols[-53]]
 </code></pre>
 
-<p>Train using the Random Forest technique. This will automatically resample (i.e. bagging) and &#39;boost&#39; using multiple trees. Decision trees are a good model for this problem, as there are likely to be &#39;thresholds&#39; for many of the accelerometer and gyroscope readings that indicate the quality of the excercise - i.e. moving to quickly or too far will be detectable as a value that exceeds a threshold. A decision tree is able to encode a nested set of such thresholds using the necessary readings.</p>
+<p>Train using the Random Forest technique. This will automatically resample (i.e. bagging) and &#39;boost&#39; using multiple trees. Decision trees are a good model for this problem, as there are likely to be &#39;thresholds&#39; for many of the accelerometer and gyroscope readings that indicate the quality of the excercise - i.e. moving too quickly or too far will be detectable as a value that exceeds a threshold. A decision tree is able to encode a nested set of such thresholds using the necessary readings.</p>
 
 <pre><code class="r">modelFit &lt;- train(classe ~ ., method = &quot;rf&quot;, data = training)
 </code></pre>
